@@ -1,0 +1,65 @@
+#Importing Various Libraries
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+#Uploading the Data
+df=pd.read_csv('spam.csv',encoding='latin=1')
+df
+
+#Understanding the Data
+df.info()
+df.shape
+df.head()
+df.tail()
+
+#Describing the Data
+df.describe()
+
+#Data Preprocessing
+#Replacing the Null values present in data with empty string
+mailData=df.where((pd.notnull(df)),'')
+#Setting spam mail to 1 and Not spam mail to 0
+mailData.loc[mailData['v1']=='spam','v1']=1
+mailData.loc[mailData['v1']=='ham','v1']=0
+
+#Modelling
+#Separating the data into messages and category
+message=mailData['v2']
+category=mailData['v1']
+
+#Splitting the Data into  Train and Test
+x_train,x_test,y_train,y_test=train_test_split(message,category,test_size=0.2,random_state=3)
+featureCollection=TfidfVectorizer(min_df=1,stop_words='english',lowercase=True)
+messageTrainFeatures=featureCollection.fit_transform(x_train)
+messageTestFeatures=featureCollection.transform(x_test)
+categoryTrain=y_train.astype('int')
+categoryTest=y_test.astype('int')
+
+#Apllying the Logistic Regression
+lr=LogisticRegression()
+lr.fit(messageTrainFeatures,categoryTrain)
+pred=lr.predict(messageTestFeatures)
+acc=accuracy_score(categoryTest,pred)
+print("Accuracy is:",acc)
+
+#Test 1
+testInputData=["Mass and Energy are interchangeable under certain circumstances.When atoms split,the process is called Nuclear Fission."]
+testDataFeatures=featureCollection.transform(testInputData)
+judgement1=lr.predict(testDataFeatures)
+if judgement1[0]==1:
+    print("Sample 1: This is a Spam mail")
+else:
+    print("Sample 1: This is not a Spam mail")
+
+#Test 2
+testData2=input("Enter a message to check if it's spam or not:")
+testDataFeatures2=featureCollection.transform([testData2])
+judgement2=lr.predict(testDataFeatures2)
+if judgement2[0]==1:
+    print("Sample 2: This is Spam mail")
+else:
+    print("Sample 2: This is not a Spam mail")
